@@ -223,9 +223,11 @@ function render(){
   if(filtro==="pend") ts = ts.filter(t=>lista(t).some(a=>a.status==="pendente"));
 
   if(!ROSTERS){
-    $("#turmas").innerHTML = `<div class="import"><h2>Carregue a lista de alunos</h2>
-      <p class="note">Escolha o arquivo <b>turmas.json</b> que o Claude te enviou. Os nomes ficam guardados só neste aparelho.</p>
-      <label class="btn" for="arq">Escolher arquivo</label><input id="arq" type="file" accept=".json,application/json" hidden></div>`;
+    $("#turmas").innerHTML = `<form class="import" id="fsenha"><h2>Digite a senha da lista de alunos</h2>
+      <p class="note">É pedida só na primeira vez. Depois a lista fica guardada neste aparelho.</p>
+      <div class="sheet-tools" style="width:100%"><input id="senha" type="password" autocomplete="current-password" placeholder="Senha" style="flex:1;min-width:160px;font:16px var(--body);padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)"><button class="btn" type="submit">Abrir lista</button></div>
+      <span class="note" id="msenha"></span>
+      <p class="note">Ou <label for="arq" style="color:var(--accent);cursor:pointer;text-decoration:underline">escolha o arquivo turmas.json</label>.<input id="arq" type="file" accept=".json,application/json" hidden></p></form>`;
     return;
   }
   $("#turmas").innerHTML = ts.length ? ts.map(t=>{
@@ -394,6 +396,21 @@ document.addEventListener("change", e=>{
   }).catch(()=>setSync("Arquivo inválido. Use o turmas.json."));
 });
 if(!EMBUTIDO){ const n=$("#nota"); n.innerHTML='Lista de alunos guardada neste aparelho. <label for="arq2" style="color:var(--accent);cursor:pointer;text-decoration:underline">Trocar lista de alunos</label><input id="arq2" type="file" accept=".json,application/json" hidden>'; }
+document.addEventListener("submit", async e=>{
+  if(e.target.id!=="fsenha") return; e.preventDefault();
+  const msg=$("#msenha"), pw=$("#senha").value; if(!pw) return;
+  msg.textContent="Abrindo…";
+  try{
+    const enc=await (await fetch("turmas.enc.json",{cache:"no-store"})).json();
+    const u=x=>Uint8Array.from(atob(x),ch=>ch.charCodeAt(0));
+    const base=await crypto.subtle.importKey("raw",new TextEncoder().encode(pw),"PBKDF2",false,["deriveKey"]);
+    const key=await crypto.subtle.deriveKey({name:"PBKDF2",salt:u(enc.salt),iterations:enc.iter,hash:"SHA-256"},base,{name:"AES-GCM",length:256},false,["decrypt"]);
+    const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:u(enc.iv)},key,u(enc.data));
+    ROSTERS=JSON.parse(new TextDecoder().decode(pt));
+    try{ localStorage.setItem("provas-turmas", JSON.stringify(ROSTERS)); }catch(_){}
+    ordenar(); semear(); render(); setSync("Lista de alunos carregada");
+  }catch(err){ msg.textContent = err && err.name==="OperationError" ? "Senha incorreta. Tente de novo." : "Não consegui abrir a lista. Verifique a internet."; }
+});
 document.addEventListener("input", e=>{ if(e.target.id==="busca" && sheet){ sheet.busca=e.target.value; renderSheet(); } });
 document.addEventListener("focusout", ()=>setTimeout(()=>{ if(pendRender) render(); },0));
 document.addEventListener("keydown", e=>{ if(e.key==="Escape" && sheet){ sheet=null; render(); } else if(e.key==="Escape" && report){ report=false; renderReport(); } if(e.key==="Enter" && e.target.matches(".av input[type=text]")) e.target.blur(); });
