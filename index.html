@@ -100,8 +100,13 @@ h1{font:800 clamp(26px,5vw,34px)/1.1 var(--display);margin:6px 0 0;text-wrap:bal
 @media (max-width:760px){
   .turma{grid-template-columns:1fr}
   .turma-id{border-right:0;border-bottom:1px solid var(--line);flex-direction:row;align-items:baseline;gap:10px}
-  .av{grid-template-columns:minmax(0,1fr) 140px;row-gap:8px}
-  .av .seg{grid-column:1/2} .av .row-end{justify-self:end}
+  .av{grid-template-columns:minmax(0,1fr) auto;row-gap:8px}
+  .av > div:first-child, .av input[type=date]{grid-column:1/-1}
+  .av input[type=date]{-webkit-appearance:none;appearance:none;min-width:0;max-width:100%;min-height:38px;text-align:left}
+  .av .seg{grid-column:1/2;display:flex;min-width:0}
+  .av .seg button{flex:1 1 auto;padding:8px 6px;min-width:0}
+  .av .seg button.s-pend{flex:0 0 40px}
+  .av .row-end{justify-self:end}
 }
 /* folha de chamada */
 .sheet-bg{position:fixed;inset:0;background:rgba(10,18,20,.45);display:flex;justify-content:flex-end;z-index:20}
