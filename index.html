@@ -1,0 +1,432 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f6b6f">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Provas">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head><body>
+<title>Controle de Provas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: caderneta de chamada — cabeçalho-resumo, filtros, uma faixa por turma com suas avaliações; folha de chamada abre por cima */
+:root{
+  --bg:#f3f5f4; --card:#ffffff; --ink:#18242b; --muted:#5c6b72; --line:#dbe2e0;
+  --accent:#0f6b6f; --accent-ink:#ffffff; --accent-soft:#dcefee;
+  --ok:#2c7a3f; --ok-soft:#e1f2e5; --bad:#b4372f; --bad-soft:#f8e3e1; --warn:#9a6400; --warn-soft:#fbefd6;
+  --display:"Archivo",system-ui,sans-serif; --body:"Source Sans 3",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#111a1e; --card:#18242a; --ink:#e6eeee; --muted:#93a4a9; --line:#2a3a40;
+  --accent:#4fb6b4; --accent-ink:#0b1517; --accent-soft:#1c3a3c;
+  --ok:#6cc483; --ok-soft:#1d3524; --bad:#f08a80; --bad-soft:#3d2220; --warn:#e6b45a; --warn-soft:#3a2f17; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111a1e; --card:#18242a; --ink:#e6eeee; --muted:#93a4a9; --line:#2a3a40;
+  --accent:#4fb6b4; --accent-ink:#0b1517; --accent-soft:#1c3a3c;
+  --ok:#6cc483; --ok-soft:#1d3524; --bad:#f08a80; --bad-soft:#3d2220; --warn:#e6b45a; --warn-soft:#3a2f17; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 var(--body);margin:0}
+.wrap{max-width:980px;margin:0 auto;padding-block:20px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:18px}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px}
+.eyebrow{font:600 12px/1 var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1{font:800 clamp(26px,5vw,34px)/1.1 var(--display);margin:6px 0 0;text-wrap:balance}
+.sync{font-size:13px;color:var(--muted)}
+.head-r{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.pill{display:inline-block;font:700 11px/1 var(--body);letter-spacing:.04em;text-transform:uppercase;padding:4px 7px;border-radius:999px;background:var(--ok-soft);color:var(--ok);margin-left:6px;vertical-align:middle}
+.rep-bg{position:fixed;inset:0;background:var(--bg);z-index:30;overflow:auto;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.rep{max-width:820px;margin:0 auto;padding-block:20px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:14px}
+.rep-top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.rep-top h2{font:800 28px/1.1 var(--display);margin:4px 0 0}
+.prog{height:8px;border-radius:99px;background:var(--line);overflow:hidden}
+.prog i{display:block;height:100%;background:var(--ok)}
+.rt{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.rt.wait{opacity:.7}
+.rt h3{font:800 20px/1 var(--display);margin:0;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.rt h3 small{font:600 13px var(--body);color:var(--muted)}
+.ra{border-top:1px solid var(--line);padding-top:8px;display:flex;flex-direction:column;gap:4px}
+.ra b{font-size:15px}
+.ra .d{font-size:13px;color:var(--muted)}
+.ra ol{margin:2px 0 0;padding-left:22px;color:var(--bad);font-size:14px;columns:2;column-gap:24px}
+@media (max-width:560px){.ra ol{columns:1}}
+.ra .okp{color:var(--ok);font-size:14px;font-weight:600}
+.ra .wt{color:var(--warn);font-size:14px}
+.import{background:var(--card);border:1px dashed var(--accent);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.import h2{font:800 20px var(--display);margin:0}
+@media print{.rep-bg{position:static}.rep-top .btn,.no-print{display:none!important}.wrap{display:none}}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.stat b{display:block;font:700 24px/1.1 var(--display);font-variant-numeric:tabular-nums}
+.stat span{font-size:13px;color:var(--muted)}
+.stat.warn b{color:var(--warn)} .stat.bad b{color:var(--bad)} .stat.ok b{color:var(--ok)}
+@media (max-width:560px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.filters{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:600 14px var(--body);border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:6px 14px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.turmas{display:flex;flex-direction:column;gap:12px}
+.turma{background:var(--card);border:1px solid var(--line);border-radius:12px;display:grid;grid-template-columns:150px minmax(0,1fr);overflow:hidden}
+.turma-id{padding:14px 16px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:2px}
+.turma-id h2{font:800 22px/1 var(--display);margin:0;letter-spacing:-.01em}
+.turma-id span{font-size:13px;color:var(--muted)}
+.avs{display:flex;flex-direction:column}
+.av{display:grid;grid-template-columns:minmax(0,1.3fr) 150px auto auto;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+.av:last-of-type{border-bottom:0}
+.av input[type=text]{font:600 15px var(--body);color:var(--ink);background:transparent;border:1px solid transparent;border-radius:6px;padding:5px 6px;width:100%;min-width:0}
+.av input[type=text]:hover{border-color:var(--line)}
+.av input[type=date]{font:500 14px var(--mono);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:5px 6px;width:100%}
+.when{font-size:12px;color:var(--muted);padding-left:6px}
+.when.late{color:var(--warn);font-weight:600}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{font:600 13px var(--body);background:var(--card);color:var(--muted);border:0;padding:7px 10px;cursor:pointer;white-space:nowrap}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"].s-aplicada{background:var(--ok-soft);color:var(--ok)}
+.seg button[aria-pressed="true"].s-nao{background:var(--bad-soft);color:var(--bad)}
+.seg button[aria-pressed="true"].s-pend{background:var(--warn-soft);color:var(--warn)}
+.btn{font:700 13px var(--body);border-radius:8px;padding:7px 12px;cursor:pointer;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);white-space:nowrap}
+.btn:disabled{background:transparent;color:var(--muted);border-color:var(--line);cursor:not-allowed;opacity:.7}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn.danger{background:var(--bad);border-color:var(--bad);color:#fff}
+.icon{background:transparent;border:0;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;padding:4px 6px;border-radius:6px}
+.icon:hover{color:var(--bad);background:var(--bad-soft)}
+.row-end{display:flex;gap:4px;align-items:center}
+.add{padding:8px 14px}
+.add button{font:600 13px var(--body);background:transparent;border:1px dashed var(--line);color:var(--accent);border-radius:8px;padding:6px 12px;cursor:pointer}
+.confirm{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--bad)}
+.empty{color:var(--muted);font-size:14px;padding:12px 14px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (max-width:760px){
+  .turma{grid-template-columns:1fr}
+  .turma-id{border-right:0;border-bottom:1px solid var(--line);flex-direction:row;align-items:baseline;gap:10px}
+  .av{grid-template-columns:minmax(0,1fr) 140px;row-gap:8px}
+  .av .seg{grid-column:1/2} .av .row-end{justify-self:end}
+}
+/* folha de chamada */
+.sheet-bg{position:fixed;inset:0;background:rgba(10,18,20,.45);display:flex;justify-content:flex-end;z-index:20}
+.sheet{background:var(--card);width:min(520px,100%);height:100%;display:flex;flex-direction:column;border-left:1px solid var(--line);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-right:env(safe-area-inset-right,0px)}
+.sheet-head{padding:16px 18px 12px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.sheet-head h3{font:800 22px/1.15 var(--display);margin:0}
+.sheet-head .meta{font-size:14px;color:var(--muted)}
+.sheet-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sheet-tools input{flex:1;min-width:140px;font:15px var(--body);padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+.count{font:600 14px var(--body);color:var(--bad)}
+.list{overflow:auto;flex:1;padding:6px 0}
+.aluno{display:grid;grid-template-columns:34px 26px minmax(0,1fr);align-items:center;gap:6px;padding:8px 18px;cursor:pointer;border-bottom:1px solid var(--line)}
+.aluno:hover{background:var(--bg)}
+.aluno .n{font:500 12px var(--mono);color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.aluno input{width:20px;height:20px;accent-color:var(--bad);margin:0}
+.aluno .nome{font-size:15px}
+.aluno.faltou{background:var(--bad-soft)}
+.aluno.faltou .nome{color:var(--bad);font-weight:700}
+.sheet-foot{padding:12px 18px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap;align-items:center}
+.toast{font-size:13px;color:var(--ok)}
+.note{font-size:13px;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){.sheet{animation:in .18s ease-out}@keyframes in{from{transform:translateX(24px);opacity:.6}}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">EEEFM Ilda Ferreira da Fonseca Martins · Educação Física · 2026</div>
+      <h1>Controle de Provas</h1>
+    </div>
+    <div class="head-r"><div class="sync" id="sync">Carregando avaliações…</div><button class="btn" data-report>Relatório geral</button></div>
+  </header>
+
+  <section class="stats" aria-label="Resumo">
+    <div class="stat"><b id="st-total">–</b><span>avaliações</span></div>
+    <div class="stat ok"><b id="st-apl">–</b><span>aplicadas</span></div>
+    <div class="stat warn"><b id="st-pend">–</b><span>a confirmar</span></div>
+    <div class="stat bad"><b id="st-falt">–</b><span>alunos faltosos</span></div>
+  </section>
+
+  <nav class="filters" aria-label="Filtrar turmas" id="filters"></nav>
+
+  <section class="turmas" id="turmas"></section>
+  <p class="note" id="nota">Listas de alunos do SEGES em 03/11/2026 (alunos transferidos ou remanejados ficaram de fora).</p>
+</div>
+
+<div id="sheet-root"></div>
+
+<script>
+const EMBUTIDO = null;
+function lerRosters(){ try{ return JSON.parse(localStorage.getItem("provas-turmas")||"null"); }catch(e){ return null; } }
+let ROSTERS = EMBUTIDO || lerRosters();
+let TURMAS = [];
+function ordenar(){ TURMAS = ROSTERS ? Object.keys(ROSTERS).sort((a,b)=>a.localeCompare(b,"pt-BR",{numeric:true})) : []; }
+ordenar();
+const STATUS = {pendente:"A confirmar", aplicada:"Aplicada", nao_aplicada:"Não aplicada"};
+
+let avs = {};          // id -> doc
+let col = null;        // db collection ou null
+let local = false;     // modo navegador
+let filtro = "todas";
+let confirmDel = null; // id aguardando confirmação
+let sheet = null;      // {id, busca}
+let report = false;
+let pendRender = false;
+const saveTimers = {};
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function hojeISO(){const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)}
+function rel(data){
+  if(!data) return {t:"sem data",late:false};
+  const d = Math.round((new Date(data+"T12:00")-new Date(hojeISO()+"T12:00"))/864e5);
+  if(d===0) return {t:"hoje",late:false};
+  if(d===1) return {t:"amanhã",late:false};
+  if(d===-1) return {t:"ontem",late:true};
+  return d>0 ? {t:`em ${d} dias`,late:false} : {t:`há ${-d} dias`,late:true};
+}
+function fmtData(data){ if(!data) return "sem data"; const [y,m,d]=data.split("-"); return `${d}/${m}/${y}`; }
+function lista(t){ return Object.values(avs).filter(a=>a.turma===t).sort((a,b)=>(a.data||"9999").localeCompare(b.data||"9999")||(a.criado||0)-(b.criado||0)); }
+
+/* ---------- armazenamento ---------- */
+function saveLocal(){ try{ localStorage.setItem("provas-avs", JSON.stringify(avs)); }catch(e){} }
+async function gravar(id){
+  const a = avs[id]; if(!a) return;
+  if(local){ saveLocal(); return; }
+  const {id:_, ...body} = a;
+  try{ await col.doc(id).set(body); setSync("Salvo"); }
+  catch(e){ setSync("Não salvou: "+(e.message||e.code)+". Tente de novo."); }
+}
+function gravarDepois(id, ms=500){ clearTimeout(saveTimers[id]); saveTimers[id]=setTimeout(()=>{delete saveTimers[id];gravar(id)}, ms); }
+async function apagar(id){
+  delete avs[id];
+  if(local){ saveLocal(); render(); return; }
+  render();
+  try{ await col.doc(id).delete(); }catch(e){ setSync("Não apagou: "+(e.message||e.code)); }
+}
+function novoId(){ return "av"+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function setSync(t){ $("#sync").textContent = t; }
+
+/* ---------- render ---------- */
+function render(){
+  const act = document.activeElement;
+  if(act && act.matches && act.matches(".av input[type=text]")){ pendRender = true; return; }
+  pendRender = false;
+  const todas = Object.values(avs);
+  const apl = todas.filter(a=>a.status==="aplicada");
+  $("#st-total").textContent = todas.length;
+  $("#st-apl").textContent = apl.length;
+  $("#st-pend").textContent = todas.filter(a=>a.status==="pendente").length;
+  $("#st-falt").textContent = apl.reduce((s,a)=>s+(a.faltas||[]).length,0);
+
+  const fs = [["todas","Todas"],["7","7º ano"],["8","8º ano"],["9","9º ano"],["pend","A confirmar"]];
+  $("#filters").innerHTML = fs.map(([k,l])=>`<button class="chip" data-f="${k}" aria-pressed="${filtro===k}">${l}</button>`).join("");
+
+  let ts = TURMAS;
+  if(["7","8","9"].includes(filtro)) ts = ts.filter(t=>t.startsWith(filtro));
+  if(filtro==="pend") ts = ts.filter(t=>lista(t).some(a=>a.status==="pendente"));
+
+  if(!ROSTERS){
+    $("#turmas").innerHTML = `<div class="import"><h2>Carregue a lista de alunos</h2>
+      <p class="note">Escolha o arquivo <b>turmas.json</b> que o Claude te enviou. Os nomes ficam guardados só neste aparelho.</p>
+      <label class="btn" for="arq">Escolher arquivo</label><input id="arq" type="file" accept=".json,application/json" hidden></div>`;
+    return;
+  }
+  $("#turmas").innerHTML = ts.length ? ts.map(t=>{
+    const items = lista(t).filter(a=>filtro!=="pend"||a.status==="pendente");
+    return `<article class="turma">
+      <div class="turma-id"><h2>${t.replace("º","º ")}</h2><span>${ROSTERS[t].length} alunos</span></div>
+      <div class="avs">
+        ${items.length ? items.map(avRow).join("") : `<div class="empty">Nenhuma avaliação cadastrada.</div>`}
+        <div class="add"><button data-add="${t}">+ Nova avaliação</button></div>
+      </div></article>`;
+  }).join("") : `<div class="empty">Nenhuma turma com prova a confirmar.</div>`;
+
+  renderSheet(); if(report) renderReport();
+}
+function avRow(a){
+  const r = rel(a.data), late = r.late && a.status==="pendente";
+  const nf = (a.faltas||[]).length;
+  const end = confirmDel===a.id
+    ? `<span class="confirm">Apagar? <button class="btn danger" data-delok="${a.id}">Sim</button><button class="btn ghost" data-delno>Não</button></span>`
+    : `<button class="btn" data-sheet="${a.id}" ${a.status==="aplicada"?"":"disabled"} title="${a.status==="aplicada"?"Marcar quem faltou":"Confirme a aplicação primeiro"}">Faltas${a.status==="aplicada"?` (${nf})`:""}</button>
+       <button class="icon" data-del="${a.id}" aria-label="Apagar avaliação">×</button>`;
+  return `<div class="av">
+    <div><input type="text" id="t-${a.id}" data-title="${a.id}" value="${esc(a.titulo||"")}" aria-label="Nome da avaliação"><div class="when ${late?"late":""}">${late?"Já passou · confirme se foi aplicada":r.t}${a.concluida&&a.status==="aplicada"?'<span class="pill">concluída</span>':""}</div></div>
+    <input type="date" id="d-${a.id}" data-date="${a.id}" value="${a.data||""}" aria-label="Data da prova">
+    <div class="seg" role="group" aria-label="Situação">
+      <button class="s-aplicada" data-st="aplicada" data-id="${a.id}" aria-pressed="${a.status==="aplicada"}">Aplicada</button>
+      <button class="s-nao" data-st="nao_aplicada" data-id="${a.id}" aria-pressed="${a.status==="nao_aplicada"}">Não aplicada</button>
+      <button class="s-pend" data-st="pendente" data-id="${a.id}" aria-pressed="${a.status==="pendente"}" title="Voltar para a confirmar">?</button>
+    </div>
+    <div class="row-end">${end}</div>
+  </div>`;
+}
+function renderSheet(){
+  const root = $("#sheet-root");
+  if(!sheet || !avs[sheet.id]){ root.innerHTML=""; sheet=null; return; }
+  const a = avs[sheet.id], alunos = ROSTERS[a.turma], f = new Set(a.faltas||[]);
+  const q = (sheet.busca||"").trim().toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+  const listEl = root.querySelector(".list"); const scroll = listEl ? listEl.scrollTop : 0;
+  const hadSearchFocus = document.activeElement && document.activeElement.id==="busca";
+  root.innerHTML = `<div class="sheet-bg" data-close>
+    <aside class="sheet" role="dialog" aria-modal="true" aria-label="Faltas da avaliação">
+      <div class="sheet-head">
+        <div class="eyebrow">${a.turma} · ${fmtData(a.data)}</div>
+        <h3>${esc(a.titulo||"Avaliação")}</h3>
+        <div class="sheet-tools">
+          <input id="busca" type="search" placeholder="Buscar aluno" value="${esc(sheet.busca||"")}">
+          <span class="count">${f.size} ${f.size===1?"faltou":"faltaram"}</span>
+        </div>
+      </div>
+      <div class="list">${alunos.map((n,i)=>{
+        const norm = n.normalize("NFD").replace(/[̀-ͯ]/g,"");
+        if(q && !norm.includes(q)) return "";
+        const on = f.has(n);
+        return `<label class="aluno ${on?"faltou":""}"><span class="n">${String(i+1).padStart(2,"0")}</span><input type="checkbox" id="c-${i}" data-aluno="${esc(n)}" ${on?"checked":""}><span class="nome">${esc(n)}</span></label>`;
+      }).join("")}</div>
+      <div class="sheet-foot">
+        <button class="btn ghost" data-copy>Copiar lista de faltosos</button>
+        <span class="toast" id="toast"></span>
+        <button class="btn" data-close-btn>Concluir</button>
+      </div>
+    </aside></div>`;
+  const nl = root.querySelector(".list"); if(nl) nl.scrollTop = scroll;
+  if(hadSearchFocus){ const b=$("#busca"); b.focus(); b.setSelectionRange(b.value.length,b.value.length); }
+}
+
+/* ---------- relatório geral ---------- */
+function turmaConcluida(t){ const l=lista(t); return l.length>0 && l.every(a=>a.status==="nao_aplicada"||(a.status==="aplicada"&&a.concluida)); }
+function reportText(){
+  const linhas=[`RELATÓRIO GERAL DE AVALIAÇÕES – Educação Física – Prof. Bruno`, `Gerado em ${new Date().toLocaleString("pt-BR")}`, ""];
+  TURMAS.forEach(t=>{
+    linhas.push(`${t} ${turmaConcluida(t)?"(concluída)":"(em andamento)"}`);
+    const l=lista(t); if(!l.length) linhas.push("  Sem avaliações");
+    l.forEach(a=>{
+      linhas.push(`  ${a.titulo} – ${fmtData(a.data)} – ${STATUS[a.status]}`);
+      if(a.status==="aplicada"){
+        if(!a.concluida) linhas.push("    Aguardando conclusão da chamada");
+        else { const f=ROSTERS[t].filter(n=>(a.faltas||[]).includes(n)); linhas.push(f.length?`    Faltaram (${f.length}): `+f.join("; "):"    Todos presentes"); }
+      }
+    });
+    linhas.push("");
+  });
+  return linhas.join("\n");
+}
+function renderReport(){
+  let root=$("#report-root"); if(!root){ root=document.createElement("div"); root.id="report-root"; document.body.appendChild(root); }
+  if(!report){ root.innerHTML=""; return; }
+  const conc=TURMAS.filter(turmaConcluida).length;
+  const totalF=Object.values(avs).filter(a=>a.status==="aplicada"&&a.concluida).reduce((s,a)=>s+(a.faltas||[]).length,0);
+  const podeImprimir = (window.self===window.top);
+  root.innerHTML=`<div class="rep-bg" role="dialog" aria-modal="true" aria-label="Relatório geral"><div class="rep">
+    <div class="rep-top">
+      <div><div class="eyebrow">Atualizado ${new Date().toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}</div><h2>Relatório geral</h2></div>
+      <div class="head-r no-print"><span class="toast" id="rtoast"></span>
+        <button class="btn ghost" data-rep-copy>Copiar relatório</button>
+        ${podeImprimir?'<button class="btn ghost" data-rep-print>Imprimir / PDF</button>':""}
+        <button class="btn" data-rep-close>Voltar</button></div>
+    </div>
+    <div class="note">${conc} de ${TURMAS.length} turmas concluídas · ${totalF} faltas registradas nas chamadas concluídas</div>
+    <div class="prog"><i style="width:${Math.round(conc/TURMAS.length*100)}%"></i></div>
+    ${TURMAS.map(t=>{
+      const l=lista(t), c=turmaConcluida(t);
+      return `<section class="rt ${c?"":"wait"}"><h3>${t.replace("º","º ")} ${c?'<span class="pill">concluída</span>':'<small>em andamento</small>'}</h3>
+        ${l.length?l.map(a=>{
+          let corpo="";
+          if(a.status==="aplicada"){
+            if(!a.concluida) corpo='<span class="wt">Aguardando conclusão da chamada</span>';
+            else { const f=ROSTERS[t].filter(n=>(a.faltas||[]).includes(n));
+              corpo=f.length?`<div class="d">Faltaram (${f.length}):</div><ol>${f.map(n=>`<li>${esc(n)}</li>`).join("")}</ol>`:'<span class="okp">Todos presentes</span>'; }
+          } else if(a.status==="nao_aplicada") corpo='<span class="wt">Prova não aplicada</span>';
+          else corpo='<span class="wt">Aplicação a confirmar</span>';
+          return `<div class="ra"><b>${esc(a.titulo)}</b><span class="d">${fmtData(a.data)} · ${STATUS[a.status]}</span>${corpo}</div>`;
+        }).join(""):'<div class="d">Sem avaliações</div>'}
+      </section>`;
+    }).join("")}
+  </div></div>`;
+}
+
+/* ---------- eventos ---------- */
+document.addEventListener("click", e=>{
+  const t = e.target.closest("button,[data-close]"); if(!t) return;
+  if(t.dataset.f){ filtro=t.dataset.f; render(); return; }
+  if(t.dataset.add){
+    const id = novoId(), n = lista(t.dataset.add).length+1;
+    avs[id] = {id, turma:t.dataset.add, titulo:`Avaliação ${n}`, data:"", status:"pendente", faltas:[], criado:Date.now()};
+    render(); gravar(id); setTimeout(()=>{const i=$("#t-"+id); i&&i.select();},0); return;
+  }
+  if(t.dataset.st){ const a=avs[t.dataset.id]; a.status=t.dataset.st; if(a.status!=="aplicada") a.concluida=false; render(); gravar(a.id); return; }
+  if(t.dataset.sheet){ sheet={id:t.dataset.sheet,busca:""}; renderSheet(); return; }
+  if(t.dataset.del){ confirmDel=t.dataset.del; render(); return; }
+  if(t.dataset.delok){ confirmDel=null; apagar(t.dataset.delok); return; }
+  if("delno" in t.dataset){ confirmDel=null; render(); return; }
+  if("copy" in t.dataset){
+    const a = avs[sheet.id]; const nomes = ROSTERS[a.turma].filter(n=>(a.faltas||[]).includes(n));
+    const txt = `${a.titulo} – ${a.turma} – ${fmtData(a.data)}\nFaltaram (${nomes.length}):\n` + (nomes.join("\n")||"ninguém");
+    const ok=()=>{$("#toast").textContent="Copiado"};
+    try{ navigator.clipboard.writeText(txt).then(ok,()=>{$("#toast").textContent="Não deu para copiar"}); }catch(_){ $("#toast").textContent="Não deu para copiar"; }
+    return;
+  }
+  if("closeBtn" in t.dataset){ const a=avs[sheet.id]; sheet=null; if(a){ a.concluida=true; clearTimeout(saveTimers[a.id]); delete saveTimers[a.id]; gravar(a.id);} render(); if(report) renderReport(); return; }
+  if(t.dataset.close!==undefined && e.target===t){ sheet=null; render(); return; }
+  if("report" in t.dataset){ report=true; renderReport(); return; }
+  if("repClose" in t.dataset){ report=false; renderReport(); return; }
+  if("repCopy" in t.dataset){ const txt=reportText(); try{ navigator.clipboard.writeText(txt).then(()=>{$("#rtoast").textContent="Relatório copiado"},()=>{$("#rtoast").textContent="Não deu para copiar"}); }catch(_){ $("#rtoast").textContent="Não deu para copiar"; } return; }
+  if("repPrint" in t.dataset){ window.print(); return; }
+});
+document.addEventListener("change", e=>{
+  const el = e.target;
+  if(el.dataset.date){ const a=avs[el.dataset.date]; a.data=el.value; render(); gravar(a.id); }
+  if(el.dataset.title){ const a=avs[el.dataset.title]; a.titulo=el.value.trim()||"Avaliação"; gravar(a.id); }
+  if(el.dataset.aluno!==undefined && sheet){
+    const a = avs[sheet.id]; const s = new Set(a.faltas||[]);
+    el.checked ? s.add(el.dataset.aluno) : s.delete(el.dataset.aluno);
+    a.faltas = ROSTERS[a.turma].filter(n=>s.has(n));
+    renderSheet(); gravarDepois(a.id);
+    $("#st-falt").textContent = Object.values(avs).filter(x=>x.status==="aplicada").reduce((t,x)=>t+(x.faltas||[]).length,0);
+  }
+});
+document.addEventListener("change", e=>{
+  if(e.target.id!=="arq" && e.target.id!=="arq2") return;
+  const f=e.target.files[0]; if(!f) return;
+  f.text().then(t=>{
+    const d=JSON.parse(t);
+    if(!d||typeof d!=="object"||!Object.values(d).every(Array.isArray)) throw new Error("formato");
+    ROSTERS=d; try{ localStorage.setItem("provas-turmas", JSON.stringify(d)); }catch(_){}
+    ordenar(); semear(); render(); setSync("Lista de alunos carregada");
+  }).catch(()=>setSync("Arquivo inválido. Use o turmas.json."));
+});
+if(!EMBUTIDO){ const n=$("#nota"); n.innerHTML='Lista de alunos guardada neste aparelho. <label for="arq2" style="color:var(--accent);cursor:pointer;text-decoration:underline">Trocar lista de alunos</label><input id="arq2" type="file" accept=".json,application/json" hidden>'; }
+document.addEventListener("input", e=>{ if(e.target.id==="busca" && sheet){ sheet.busca=e.target.value; renderSheet(); } });
+document.addEventListener("focusout", ()=>setTimeout(()=>{ if(pendRender) render(); },0));
+document.addEventListener("keydown", e=>{ if(e.key==="Escape" && sheet){ sheet=null; render(); } else if(e.key==="Escape" && report){ report=false; renderReport(); } if(e.key==="Enter" && e.target.matches(".av input[type=text]")) e.target.blur(); });
+
+/* ---------- inicialização ---------- */
+render();
+function semear(){
+  if(!local || !ROSTERS || Object.keys(avs).length) return;
+  TURMAS.forEach((t,i)=>{ const id="av-"+t.replace(/\W/g,""); avs[id]={id,turma:t,titulo:"Avaliação do 3º trimestre",data:"",status:"pendente",faltas:[],criado:i}; });
+  saveLocal();
+}
+function modoLocal(msg){
+  local = true;
+  try{ avs = JSON.parse(localStorage.getItem("provas-avs")||"{}")||{}; }catch(e){ avs={}; }
+  semear(); setSync(msg); render();
+}
+(async ()=>{
+  const timer = setTimeout(()=>{ if(!col && !local) modoLocal("Sem conexão com o banco · salvando só neste navegador"); }, 10000);
+  let db = null;
+  try{ db = window.claude && window.claude.use ? await window.claude.use("db") : null; }catch(e){ db=null; }
+  if(!db){ clearTimeout(timer); if(!local) modoLocal("Salvando só neste navegador"); return; }
+  if(local) return;
+  col = db.collection("avaliacoes");
+  col.onSnapshot(snap=>{
+    clearTimeout(timer);
+    const novo = {};
+    snap.docs.forEach(d=>{ novo[d.id] = {id:d.id, ...d.data()}; });
+    // preserva alterações locais ainda não enviadas
+    Object.keys(saveTimers).forEach(id=>{ if(avs[id]) novo[id]=avs[id]; });
+    avs = novo; setSync("Sincronizado"); render();
+  }, err=>{ clearTimeout(timer); setSync("Erro ao carregar: "+(err.message||err.code)); });
+})();
+</script>
+
+<script>if("serviceWorker" in navigator){addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}</script>
+</body></html>
