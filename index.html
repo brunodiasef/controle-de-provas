@@ -182,21 +182,44 @@ function rel(data){
   return d>0 ? {t:`em ${d} dias`,late:false} : {t:`há ${-d} dias`,late:true};
 }
 function fmtData(data){ if(!data) return "sem data"; const [y,m,d]=data.split("-"); return `${d}/${m}/${y}`; }
-function lista(t){ return Object.values(avs).filter(a=>a.turma===t).sort((a,b)=>(a.data||"9999").localeCompare(b.data||"9999")||(a.criado||0)-(b.criado||0)); }
+function vivos(){ return Object.values(avs).filter(a=>!a.deleted); }
+function lista(t){ return vivos().filter(a=>a.turma===t).sort((a,b)=>(a.data||"9999").localeCompare(b.data||"9999")||(a.criado||0)-(b.criado||0)); }
 
 /* ---------- armazenamento ---------- */
+/* ---------- sincronização com o Google Drive ---------- */
+function lerSync(){ try{ return JSON.parse(localStorage.getItem("provas-sync")||"null"); }catch(e){ return null; } }
+let SYNC = lerSync(), syncTimer=null, syncando=false, syncDeNovo=false;
+function agendarSync(ms=1200){ if(!SYNC) return; clearTimeout(syncTimer); syncTimer=setTimeout(sincronizar, ms); }
+async function sincronizar(){
+  if(!local || !SYNC) return;
+  if(syncando){ syncDeNovo=true; return; }
+  syncando=true; setSync("Sincronizando…");
+  try{
+    const r = await fetch(SYNC.url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({k:SYNC.key,docs:avs})});
+    const j = await r.json();
+    if(!j.ok) throw new Error(j.erro||"resposta");
+    let mudou=false;
+    for(const id in j.docs){ const d=j.docs[id]; if(!avs[id] || (d.mod||0)>(avs[id].mod||0)){ avs[id]={...d,id}; mudou=true; } }
+    saveLocal(); if(mudou) render();
+    setSync("Sincronizado com o Google Drive às "+new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}));
+  }catch(e){ setSync("Sem conexão · salvo neste aparelho, sincroniza depois"); }
+  finally{ syncando=false; if(syncDeNovo){ syncDeNovo=false; agendarSync(300); } }
+}
+addEventListener("online",()=>agendarSync(200));
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") agendarSync(200); });
+setInterval(()=>{ if(document.visibilityState==="visible") sincronizar(); }, 45000);
 function saveLocal(){ try{ localStorage.setItem("provas-avs", JSON.stringify(avs)); }catch(e){} }
 async function gravar(id){
   const a = avs[id]; if(!a) return;
-  if(local){ saveLocal(); return; }
+  if(local){ a.mod=Date.now(); saveLocal(); agendarSync(); return; }
   const {id:_, ...body} = a;
   try{ await col.doc(id).set(body); setSync("Salvo"); }
   catch(e){ setSync("Não salvou: "+(e.message||e.code)+". Tente de novo."); }
 }
 function gravarDepois(id, ms=500){ clearTimeout(saveTimers[id]); saveTimers[id]=setTimeout(()=>{delete saveTimers[id];gravar(id)}, ms); }
 async function apagar(id){
+  if(local){ avs[id]={id,deleted:true,mod:Date.now()}; saveLocal(); render(); agendarSync(); return; }
   delete avs[id];
-  if(local){ saveLocal(); render(); return; }
   render();
   try{ await col.doc(id).delete(); }catch(e){ setSync("Não apagou: "+(e.message||e.code)); }
 }
@@ -208,7 +231,7 @@ function render(){
   const act = document.activeElement;
   if(act && act.matches && act.matches(".av input[type=text]")){ pendRender = true; return; }
   pendRender = false;
-  const todas = Object.values(avs);
+  const todas = vivos();
   const apl = todas.filter(a=>a.status==="aplicada");
   $("#st-total").textContent = todas.length;
   $("#st-apl").textContent = apl.length;
@@ -315,7 +338,7 @@ function renderReport(){
   let root=$("#report-root"); if(!root){ root=document.createElement("div"); root.id="report-root"; document.body.appendChild(root); }
   if(!report){ root.innerHTML=""; return; }
   const conc=TURMAS.filter(turmaConcluida).length;
-  const totalF=Object.values(avs).filter(a=>a.status==="aplicada"&&a.concluida).reduce((s,a)=>s+(a.faltas||[]).length,0);
+  const totalF=vivos().filter(a=>a.status==="aplicada"&&a.concluida).reduce((s,a)=>s+(a.faltas||[]).length,0);
   const podeImprimir = (window.self===window.top);
   root.innerHTML=`<div class="rep-bg" role="dialog" aria-modal="true" aria-label="Relatório geral"><div class="rep">
     <div class="rep-top">
@@ -382,7 +405,7 @@ document.addEventListener("change", e=>{
     el.checked ? s.add(el.dataset.aluno) : s.delete(el.dataset.aluno);
     a.faltas = ROSTERS[a.turma].filter(n=>s.has(n));
     renderSheet(); gravarDepois(a.id);
-    $("#st-falt").textContent = Object.values(avs).filter(x=>x.status==="aplicada").reduce((t,x)=>t+(x.faltas||[]).length,0);
+    $("#st-falt").textContent = vivos().filter(x=>x.status==="aplicada").reduce((t,x)=>t+(x.faltas||[]).length,0);
   }
 });
 document.addEventListener("change", e=>{
@@ -395,7 +418,8 @@ document.addEventListener("change", e=>{
     ordenar(); semear(); render(); setSync("Lista de alunos carregada");
   }).catch(()=>setSync("Arquivo inválido. Use o turmas.json."));
 });
-if(!EMBUTIDO){ const n=$("#nota"); n.innerHTML='Lista de alunos guardada neste aparelho. <label for="arq2" style="color:var(--accent);cursor:pointer;text-decoration:underline">Trocar lista de alunos</label><input id="arq2" type="file" accept=".json,application/json" hidden>'; }
+if(!EMBUTIDO){ const n=$("#nota"); n.innerHTML=(SYNC?'Sincronização com o Google Drive ativa. ':'Sincronização desligada neste aparelho. <a href="#" id="religar" style="color:var(--accent)">Digitar a senha para ativar</a>. ')+'Lista de alunos guardada neste aparelho. <label for="arq2" style="color:var(--accent);cursor:pointer;text-decoration:underline">Trocar lista de alunos</label><input id="arq2" type="file" accept=".json,application/json" hidden>'; }
+document.addEventListener("click", e=>{ if(e.target.id==="religar"){ e.preventDefault(); ROSTERS=null; ordenar(); render(); window.scrollTo(0,0); } });
 document.addEventListener("submit", async e=>{
   if(e.target.id!=="fsenha") return; e.preventDefault();
   const msg=$("#msenha"), pw=$("#senha").value; if(!pw) return;
@@ -406,9 +430,11 @@ document.addEventListener("submit", async e=>{
     const base=await crypto.subtle.importKey("raw",new TextEncoder().encode(pw),"PBKDF2",false,["deriveKey"]);
     const key=await crypto.subtle.deriveKey({name:"PBKDF2",salt:u(enc.salt),iterations:enc.iter,hash:"SHA-256"},base,{name:"AES-GCM",length:256},false,["decrypt"]);
     const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:u(enc.iv)},key,u(enc.data));
-    ROSTERS=JSON.parse(new TextDecoder().decode(pt));
+    const pay=JSON.parse(new TextDecoder().decode(pt));
+    ROSTERS = pay.turmas || pay;
+    if(pay.sync){ SYNC=pay.sync; try{ localStorage.setItem("provas-sync", JSON.stringify(SYNC)); }catch(_){} }
     try{ localStorage.setItem("provas-turmas", JSON.stringify(ROSTERS)); }catch(_){}
-    ordenar(); semear(); render(); setSync("Lista de alunos carregada");
+    ordenar(); render(); setSync("Lista de alunos carregada"); if(SYNC) await sincronizar(); semear(); render();
   }catch(err){ msg.textContent = err && err.name==="OperationError" ? "Senha incorreta. Tente de novo." : "Não consegui abrir a lista. Verifique a internet."; }
 });
 document.addEventListener("input", e=>{ if(e.target.id==="busca" && sheet){ sheet.busca=e.target.value; renderSheet(); } });
@@ -419,13 +445,14 @@ document.addEventListener("keydown", e=>{ if(e.key==="Escape" && sheet){ sheet=n
 render();
 function semear(){
   if(!local || !ROSTERS || Object.keys(avs).length) return;
-  TURMAS.forEach((t,i)=>{ const id="av-"+t.replace(/\W/g,""); avs[id]={id,turma:t,titulo:"Avaliação do 3º trimestre",data:"",status:"pendente",faltas:[],criado:i}; });
-  saveLocal();
+  TURMAS.forEach((t,i)=>{ const id="av-"+t.replace(/\W/g,""); avs[id]={id,turma:t,titulo:"Avaliação do 3º trimestre",data:"",status:"pendente",faltas:[],criado:i,mod:1}; });
+  saveLocal(); agendarSync();
 }
 function modoLocal(msg){
   local = true;
   try{ avs = JSON.parse(localStorage.getItem("provas-avs")||"{}")||{}; }catch(e){ avs={}; }
-  semear(); setSync(msg); render();
+  setSync(msg); render();
+  if(SYNC && ROSTERS) sincronizar().then(()=>{ semear(); render(); }); else { semear(); render(); }
 }
 (async ()=>{
   const timer = setTimeout(()=>{ if(!col && !local) modoLocal("Sem conexão com o banco · salvando só neste navegador"); }, 10000);
