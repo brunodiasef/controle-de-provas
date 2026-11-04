@@ -118,8 +118,19 @@ h1{font:800 clamp(26px,5vw,34px)/1.1 var(--display);margin:6px 0 0;text-wrap:bal
 .sheet-tools input{flex:1;min-width:140px;font:15px var(--body);padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
 .count{font:600 14px var(--body);color:var(--bad)}
 .list{overflow:auto;flex:1;padding:6px 0}
-.aluno{display:grid;grid-template-columns:34px 26px minmax(0,1fr);align-items:center;gap:6px;padding:8px 18px;cursor:pointer;border-bottom:1px solid var(--line)}
-.aluno:hover{background:var(--bg)}
+.aluno{display:grid;grid-template-columns:28px minmax(0,1fr) 58px 58px;align-items:center;gap:6px;padding:6px 18px;border-bottom:1px solid var(--line)}
+.aluno .ck{display:flex;justify-content:center;align-items:center;height:36px;border-radius:8px;cursor:pointer}
+.aluno .ck:hover{background:var(--bg)}
+.aluno .ck.fa input{accent-color:var(--warn)}
+.aluno .ck.off{opacity:.35;cursor:not-allowed}
+.cols{display:grid;grid-template-columns:28px minmax(0,1fr) 58px 58px;gap:6px;padding:8px 18px;border-bottom:1px solid var(--line);font:700 11px/1.1 var(--body);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);position:sticky;top:0;background:var(--card);z-index:1}
+.cols span:nth-child(3),.cols span:nth-child(4){text-align:center}
+.cols .c-f{color:var(--bad)} .cols .c-fa{color:var(--warn)}
+.count.fa{color:var(--warn)}
+.aluno.semfa{background:var(--warn-soft)}
+.aluno.semfa .nome{color:var(--warn);font-weight:700}
+.btn.fa{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+.ra ol.fa{color:var(--warn)}
 .aluno .n{font:500 12px var(--mono);color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
 .aluno input{width:20px;height:20px;accent-color:var(--bad);margin:0}
 .aluno .nome{font-size:15px}
@@ -276,6 +287,7 @@ function avRow(a){
   const end = confirmDel===a.id
     ? `<span class="confirm">Apagar? <button class="btn danger" data-delok="${a.id}">Sim</button><button class="btn ghost" data-delno>Não</button></span>`
     : `<button class="btn" data-sheet="${a.id}" ${a.status==="aplicada"?"":"disabled"} title="${a.status==="aplicada"?"Marcar quem faltou":"Confirme a aplicação primeiro"}">Faltas${a.status==="aplicada"?` (${nf})`:""}</button>
+       <button class="btn fa" data-fa="${a.id}" title="Marcar quem não fez a F.A.">F.A.${(a.semFA||[]).length?` (${(a.semFA||[]).length})`:""}</button>
        <button class="icon" data-del="${a.id}" aria-label="Apagar avaliação">×</button>`;
   return `<div class="av">
     <div><input type="text" id="t-${a.id}" data-title="${a.id}" value="${esc(a.titulo||"")}" aria-label="Nome da avaliação"><div class="when ${late?"late":""}">${late?"Já passou · confirme se foi aplicada":r.t}${a.concluida&&a.status==="aplicada"?'<span class="pill">concluída</span>':""}</div></div>
@@ -291,7 +303,8 @@ function avRow(a){
 function renderSheet(){
   const root = $("#sheet-root");
   if(!sheet || !avs[sheet.id]){ root.innerHTML=""; sheet=null; return; }
-  const a = avs[sheet.id], alunos = ROSTERS[a.turma], f = new Set(a.faltas||[]);
+  const a = avs[sheet.id], alunos = ROSTERS[a.turma], f = new Set(a.faltas||[]), fa = new Set(a.semFA||[]);
+  const podeF = a.status==="aplicada";
   const q = (sheet.busca||"").trim().toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
   const listEl = root.querySelector(".list"); const scroll = listEl ? listEl.scrollTop : 0;
   const hadSearchFocus = document.activeElement && document.activeElement.id==="busca";
@@ -302,17 +315,20 @@ function renderSheet(){
         <h3>${esc(a.titulo||"Avaliação")}</h3>
         <div class="sheet-tools">
           <input id="busca" type="search" placeholder="Buscar aluno" value="${esc(sheet.busca||"")}">
-          <span class="count">${f.size} ${f.size===1?"faltou":"faltaram"}</span>
+          <span class="count">${podeF?`${f.size} ${f.size===1?"faltou":"faltaram"}`:"prova ainda não aplicada"}</span>
+          <span class="count fa">${fa.size} sem F.A.</span>
         </div>
       </div>
-      <div class="list">${alunos.map((n,i)=>{
+      <div class="list"><div class="cols"><span>Nº</span><span>Aluno</span><span class="c-f">Faltou</span><span class="c-fa">Sem F.A.</span></div>${alunos.map((n,i)=>{
         const norm = n.normalize("NFD").replace(/[̀-ͯ]/g,"");
         if(q && !norm.includes(q)) return "";
-        const on = f.has(n);
-        return `<label class="aluno ${on?"faltou":""}"><span class="n">${String(i+1).padStart(2,"0")}</span><input type="checkbox" id="c-${i}" data-aluno="${esc(n)}" ${on?"checked":""}><span class="nome">${esc(n)}</span></label>`;
+        const on = f.has(n), sf = fa.has(n);
+        return `<div class="aluno ${on?"faltou":sf?"semfa":""}"><span class="n">${String(i+1).padStart(2,"0")}</span><span class="nome">${esc(n)}</span>
+          <label class="ck ${podeF?"":"off"}" title="Faltou à prova"><input type="checkbox" id="c-${i}" data-aluno="${esc(n)}" ${on?"checked":""} ${podeF?"":"disabled"} aria-label="${esc(n)} faltou"></label>
+          <label class="ck fa" title="Não fez a F.A."><input type="checkbox" id="fa-${i}" data-fa-aluno="${esc(n)}" ${sf?"checked":""} aria-label="${esc(n)} não fez a F.A."></label></div>`;
       }).join("")}</div>
       <div class="sheet-foot">
-        <button class="btn ghost" data-copy>Copiar lista de faltosos</button>
+        <button class="btn ghost" data-copy>Copiar listas</button>
         <span class="toast" id="toast"></span>
         <button class="btn" data-close-btn>Concluir</button>
       </div>
@@ -334,6 +350,8 @@ function reportText(){
         if(!a.concluida) linhas.push("    Aguardando conclusão da chamada");
         else { const f=ROSTERS[t].filter(n=>(a.faltas||[]).includes(n)); linhas.push(f.length?`    Faltaram (${f.length}): `+f.join("; "):"    Todos presentes"); }
       }
+      const sfa=ROSTERS[t].filter(n=>(a.semFA||[]).includes(n));
+      if(sfa.length) linhas.push(`    Não fizeram a F.A. (${sfa.length}): `+sfa.join("; ")); else if(a.concluida) linhas.push("    Todos fizeram a F.A.");
     });
     linhas.push("");
   });
@@ -366,6 +384,8 @@ function renderReport(){
               corpo=f.length?`<div class="d">Faltaram (${f.length}):</div><ol>${f.map(n=>`<li>${esc(n)}</li>`).join("")}</ol>`:'<span class="okp">Todos presentes</span>'; }
           } else if(a.status==="nao_aplicada") corpo='<span class="wt">Prova não aplicada</span>';
           else corpo='<span class="wt">Aplicação a confirmar</span>';
+          const sfa=ROSTERS[t].filter(n=>(a.semFA||[]).includes(n));
+          corpo += sfa.length?`<div class="d">Não fizeram a F.A. (${sfa.length}):</div><ol class="fa">${sfa.map(n=>`<li>${esc(n)}</li>`).join("")}</ol>`:(a.concluida?'<span class="okp">Todos fizeram a F.A.</span>':"");
           return `<div class="ra"><b>${esc(a.titulo)}</b><span class="d">${fmtData(a.data)} · ${STATUS[a.status]}</span>${corpo}</div>`;
         }).join(""):'<div class="d">Sem avaliações</div>'}
       </section>`;
@@ -384,17 +404,18 @@ document.addEventListener("click", e=>{
   }
   if(t.dataset.st){ const a=avs[t.dataset.id]; a.status=t.dataset.st; if(a.status!=="aplicada") a.concluida=false; render(); gravar(a.id); return; }
   if(t.dataset.sheet){ sheet={id:t.dataset.sheet,busca:""}; renderSheet(); return; }
+  if(t.dataset.fa){ sheet={id:t.dataset.fa,busca:""}; renderSheet(); return; }
   if(t.dataset.del){ confirmDel=t.dataset.del; render(); return; }
   if(t.dataset.delok){ confirmDel=null; apagar(t.dataset.delok); return; }
   if("delno" in t.dataset){ confirmDel=null; render(); return; }
   if("copy" in t.dataset){
-    const a = avs[sheet.id]; const nomes = ROSTERS[a.turma].filter(n=>(a.faltas||[]).includes(n));
-    const txt = `${a.titulo} – ${a.turma} – ${fmtData(a.data)}\nFaltaram (${nomes.length}):\n` + (nomes.join("\n")||"ninguém");
+    const a = avs[sheet.id]; const nomes = ROSTERS[a.turma].filter(n=>(a.faltas||[]).includes(n)), sfa = ROSTERS[a.turma].filter(n=>(a.semFA||[]).includes(n));
+    const txt = `${a.titulo} – ${a.turma} – ${fmtData(a.data)}\nFaltaram (${nomes.length}):\n` + (nomes.join("\n")||"ninguém") + `\n\nNão fizeram a F.A. (${sfa.length}):\n` + (sfa.join("\n")||"ninguém");
     const ok=()=>{$("#toast").textContent="Copiado"};
     try{ navigator.clipboard.writeText(txt).then(ok,()=>{$("#toast").textContent="Não deu para copiar"}); }catch(_){ $("#toast").textContent="Não deu para copiar"; }
     return;
   }
-  if("closeBtn" in t.dataset){ const a=avs[sheet.id]; sheet=null; if(a){ a.concluida=true; clearTimeout(saveTimers[a.id]); delete saveTimers[a.id]; gravar(a.id);} render(); if(report) renderReport(); return; }
+  if("closeBtn" in t.dataset){ const a=avs[sheet.id]; sheet=null; if(a){ if(a.status==="aplicada") a.concluida=true; clearTimeout(saveTimers[a.id]); delete saveTimers[a.id]; gravar(a.id);} render(); if(report) renderReport(); return; }
   if(t.dataset.close!==undefined && e.target===t){ sheet=null; render(); return; }
   if("report" in t.dataset){ report=true; renderReport(); return; }
   if("repClose" in t.dataset){ report=false; renderReport(); return; }
@@ -405,6 +426,12 @@ document.addEventListener("change", e=>{
   const el = e.target;
   if(el.dataset.date){ const a=avs[el.dataset.date]; a.data=el.value; render(); gravar(a.id); }
   if(el.dataset.title){ const a=avs[el.dataset.title]; a.titulo=el.value.trim()||"Avaliação"; gravar(a.id); }
+  if(el.dataset.faAluno!==undefined && sheet){
+    const a = avs[sheet.id]; const s = new Set(a.semFA||[]);
+    el.checked ? s.add(el.dataset.faAluno) : s.delete(el.dataset.faAluno);
+    a.semFA = ROSTERS[a.turma].filter(n=>s.has(n));
+    renderSheet(); gravarDepois(a.id); return;
+  }
   if(el.dataset.aluno!==undefined && sheet){
     const a = avs[sheet.id]; const s = new Set(a.faltas||[]);
     el.checked ? s.add(el.dataset.aluno) : s.delete(el.dataset.aluno);
