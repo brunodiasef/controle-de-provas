@@ -103,10 +103,10 @@ h1{font:800 clamp(26px,5vw,34px)/1.1 var(--display);margin:6px 0 0;text-wrap:bal
   .av{grid-template-columns:minmax(0,1fr) auto;row-gap:8px}
   .av > div:first-child, .av input[type=date]{grid-column:1/-1}
   .av input[type=date]{-webkit-appearance:none;appearance:none;min-width:0;max-width:100%;min-height:38px;text-align:left}
-  .av .seg{grid-column:1/2;display:flex;min-width:0}
+  .av .seg{grid-column:1/-1;display:flex;min-width:0}
   .av .seg button{flex:1 1 auto;padding:8px 6px;min-width:0}
   .av .seg button.s-pend{flex:0 0 40px}
-  .av .row-end{justify-self:end}
+  .av .row-end{grid-column:1/-1;justify-self:stretch;justify-content:flex-end}
 }
 /* folha de chamada */
 .sheet-bg{position:fixed;inset:0;background:rgba(10,18,20,.45);display:flex;justify-content:flex-end;z-index:20}
@@ -129,7 +129,10 @@ h1{font:800 clamp(26px,5vw,34px)/1.1 var(--display);margin:6px 0 0;text-wrap:bal
 .count.fa{color:var(--warn)}
 .aluno.semfa{background:var(--warn-soft)}
 .aluno.semfa .nome{color:var(--warn);font-weight:700}
-.btn.fa{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+:root{--btn-white:#ffffff;--btn-black:#111111}
+.btn.rowbtn{background:var(--btn-white);color:var(--btn-black);border:1px solid var(--btn-black)}
+.btn.rowbtn:hover{background:#f2f2f2}
+.btn.rowbtn:disabled{background:var(--btn-white);color:#8a8a8a;border-color:#8a8a8a;opacity:.6}
 .ra ol.fa{color:var(--warn)}
 .aluno .n{font:500 12px var(--mono);color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
 .aluno input{width:20px;height:20px;accent-color:var(--bad);margin:0}
@@ -286,8 +289,8 @@ function avRow(a){
   const nf = (a.faltas||[]).length;
   const end = confirmDel===a.id
     ? `<span class="confirm">Apagar? <button class="btn danger" data-delok="${a.id}">Sim</button><button class="btn ghost" data-delno>Não</button></span>`
-    : `<button class="btn" data-sheet="${a.id}" ${a.status==="aplicada"?"":"disabled"} title="${a.status==="aplicada"?"Marcar quem faltou":"Confirme a aplicação primeiro"}">Faltas${a.status==="aplicada"?` (${nf})`:""}</button>
-       <button class="btn fa" data-fa="${a.id}" title="Marcar quem não fez a F.A.">F.A.${(a.semFA||[]).length?` (${(a.semFA||[]).length})`:""}</button>
+    : `<button class="btn rowbtn" data-sheet="${a.id}" ${a.status==="aplicada"?"":"disabled"} title="${a.status==="aplicada"?"Marcar quem faltou":"Confirme a aplicação primeiro"}">Faltas${a.status==="aplicada"?` (${nf})`:""}</button>
+       <button class="btn rowbtn" data-fa="${a.id}" title="Marcar quem não fez a F.A.">F.A.${(a.semFA||[]).length?` (${(a.semFA||[]).length})`:""}</button>
        <button class="icon" data-del="${a.id}" aria-label="Apagar avaliação">×</button>`;
   return `<div class="av">
     <div><input type="text" id="t-${a.id}" data-title="${a.id}" value="${esc(a.titulo||"")}" aria-label="Nome da avaliação"><div class="when ${late?"late":""}">${late?"Já passou · confirme se foi aplicada":r.t}${a.concluida&&a.status==="aplicada"?'<span class="pill">concluída</span>':""}</div></div>
