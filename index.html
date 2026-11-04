@@ -142,7 +142,7 @@ h1{font:800 clamp(26px,5vw,34px)/1.1 var(--display);margin:6px 0 0;text-wrap:bal
 .sheet-foot{padding:12px 18px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap;align-items:center}
 .toast{font-size:13px;color:var(--ok)}
 .note{font-size:13px;color:var(--muted)}
-@media (prefers-reduced-motion:no-preference){.sheet{animation:in .18s ease-out}@keyframes in{from{transform:translateX(24px);opacity:.6}}}
+@media (prefers-reduced-motion:no-preference){.sheet.abrindo{animation:in .18s ease-out}@keyframes in{from{transform:translateX(24px);opacity:.6}}}
 </style>
 
 <div class="wrap">
@@ -312,14 +312,14 @@ function renderSheet(){
   const listEl = root.querySelector(".list"); const scroll = listEl ? listEl.scrollTop : 0;
   const hadSearchFocus = document.activeElement && document.activeElement.id==="busca";
   root.innerHTML = `<div class="sheet-bg" data-close>
-    <aside class="sheet" role="dialog" aria-modal="true" aria-label="Faltas da avaliação">
+    <aside class="sheet ${sheet.novo?"abrindo":""}" role="dialog" aria-modal="true" aria-label="Faltas da avaliação">
       <div class="sheet-head">
         <div class="eyebrow">${a.turma} · ${fmtData(a.data)}</div>
         <h3>${esc(a.titulo||"Avaliação")}</h3>
         <div class="sheet-tools">
           <input id="busca" type="search" placeholder="Buscar aluno" value="${esc(sheet.busca||"")}">
-          <span class="count">${podeF?`${f.size} ${f.size===1?"faltou":"faltaram"}`:"prova ainda não aplicada"}</span>
-          <span class="count fa">${fa.size} sem F.A.</span>
+          <span class="count" id="cnt-f">${podeF?`${f.size} ${f.size===1?"faltou":"faltaram"}`:"prova ainda não aplicada"}</span>
+          <span class="count fa" id="cnt-fa">${fa.size} sem F.A.</span>
         </div>
       </div>
       <div class="list"><div class="cols"><span>Nº</span><span>Aluno</span><span class="c-f">Faltou</span><span class="c-fa">Sem F.A.</span></div>${alunos.map((n,i)=>{
@@ -336,8 +336,18 @@ function renderSheet(){
         <button class="btn" data-close-btn>Concluir</button>
       </div>
     </aside></div>`;
+  sheet.novo = false;
   const nl = root.querySelector(".list"); if(nl) nl.scrollTop = scroll;
   if(hadSearchFocus){ const b=$("#busca"); b.focus(); b.setSelectionRange(b.value.length,b.value.length); }
+}
+
+function atualizarLinha(el){
+  const a = avs[sheet.id]; const row = el.closest(".aluno");
+  const f = el.closest(".aluno").querySelector("[data-aluno]"), g = el.closest(".aluno").querySelector("[data-fa-aluno]");
+  row.classList.toggle("faltou", f.checked); row.classList.toggle("semfa", !f.checked && g.checked);
+  const nf=(a.faltas||[]).length, nfa=(a.semFA||[]).length;
+  if(a.status==="aplicada") $("#cnt-f").textContent = `${nf} ${nf===1?"faltou":"faltaram"}`;
+  $("#cnt-fa").textContent = `${nfa} sem F.A.`;
 }
 
 /* ---------- relatório geral ---------- */
@@ -406,8 +416,8 @@ document.addEventListener("click", e=>{
     render(); gravar(id); setTimeout(()=>{const i=$("#t-"+id); i&&i.select();},0); return;
   }
   if(t.dataset.st){ const a=avs[t.dataset.id]; a.status=t.dataset.st; if(a.status!=="aplicada") a.concluida=false; render(); gravar(a.id); return; }
-  if(t.dataset.sheet){ sheet={id:t.dataset.sheet,busca:""}; renderSheet(); return; }
-  if(t.dataset.fa){ sheet={id:t.dataset.fa,busca:""}; renderSheet(); return; }
+  if(t.dataset.sheet){ sheet={id:t.dataset.sheet,busca:"",novo:true}; renderSheet(); return; }
+  if(t.dataset.fa){ sheet={id:t.dataset.fa,busca:"",novo:true}; renderSheet(); return; }
   if(t.dataset.del){ confirmDel=t.dataset.del; render(); return; }
   if(t.dataset.delok){ confirmDel=null; apagar(t.dataset.delok); return; }
   if("delno" in t.dataset){ confirmDel=null; render(); return; }
@@ -433,13 +443,13 @@ document.addEventListener("change", e=>{
     const a = avs[sheet.id]; const s = new Set(a.semFA||[]);
     el.checked ? s.add(el.dataset.faAluno) : s.delete(el.dataset.faAluno);
     a.semFA = ROSTERS[a.turma].filter(n=>s.has(n));
-    renderSheet(); gravarDepois(a.id); return;
+    atualizarLinha(el); gravarDepois(a.id); return;
   }
   if(el.dataset.aluno!==undefined && sheet){
     const a = avs[sheet.id]; const s = new Set(a.faltas||[]);
     el.checked ? s.add(el.dataset.aluno) : s.delete(el.dataset.aluno);
     a.faltas = ROSTERS[a.turma].filter(n=>s.has(n));
-    renderSheet(); gravarDepois(a.id);
+    atualizarLinha(el); gravarDepois(a.id);
     $("#st-falt").textContent = vivos().filter(x=>x.status==="aplicada").reduce((t,x)=>t+(x.faltas||[]).length,0);
   }
 });
