@@ -56,7 +56,16 @@ h1{font:800 clamp(26px,5vw,34px)/1.1 var(--display);margin:6px 0 0;text-wrap:bal
 .ra .wt{color:var(--warn);font-size:14px}
 .import{background:var(--card);border:1px dashed var(--accent);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
 .import h2{font:800 20px var(--display);margin:0}
-@media print{.rep-bg{position:static}.rep-top .btn,.no-print{display:none!important}.wrap{display:none}}
+@media print{
+  .rep-bg{position:static;overflow:visible;padding:0}
+  .rep{max-width:none;padding:0}
+  .rep-top .btn,.no-print{display:none!important}
+  .wrap,#sheet-root{display:none!important}
+  .rt{break-inside:avoid;page-break-inside:avoid;opacity:1}
+  .rt h3{break-after:avoid;page-break-after:avoid}
+  .ra{break-inside:avoid;page-break-inside:avoid}
+  .ra ol{columns:2}
+}
 .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
 .stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
 .stat b{display:block;font:700 24px/1.1 var(--display);font-variant-numeric:tabular-nums}
