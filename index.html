@@ -17,17 +17,17 @@
 :root{
   --bg:#f3f5f4; --card:#ffffff; --ink:#18242b; --muted:#5c6b72; --line:#dbe2e0;
   --accent:#0f6b6f; --accent-ink:#ffffff; --accent-soft:#dcefee;
-  --ok:#2c7a3f; --ok-soft:#e1f2e5; --bad:#b4372f; --bad-soft:#f8e3e1; --warn:#9a6400; --warn-soft:#fbefd6;
+  --low:#6a3fb0; --low-soft:#ece4f8; --ok:#2c7a3f; --ok-soft:#e1f2e5; --bad:#b4372f; --bad-soft:#f8e3e1; --warn:#9a6400; --warn-soft:#fbefd6;
   --display:"Archivo",system-ui,sans-serif; --body:"Source Sans 3",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#111a1e; --card:#18242a; --ink:#e6eeee; --muted:#93a4a9; --line:#2a3a40;
   --accent:#4fb6b4; --accent-ink:#0b1517; --accent-soft:#1c3a3c;
-  --ok:#6cc483; --ok-soft:#1d3524; --bad:#f08a80; --bad-soft:#3d2220; --warn:#e6b45a; --warn-soft:#3a2f17; color-scheme:dark}}
+  --low:#b99af0; --low-soft:#2d2440; --ok:#6cc483; --ok-soft:#1d3524; --bad:#f08a80; --bad-soft:#3d2220; --warn:#e6b45a; --warn-soft:#3a2f17; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#111a1e; --card:#18242a; --ink:#e6eeee; --muted:#93a4a9; --line:#2a3a40;
   --accent:#4fb6b4; --accent-ink:#0b1517; --accent-soft:#1c3a3c;
-  --ok:#6cc483; --ok-soft:#1d3524; --bad:#f08a80; --bad-soft:#3d2220; --warn:#e6b45a; --warn-soft:#3a2f17; color-scheme:dark}
+  --low:#b99af0; --low-soft:#2d2440; --ok:#6cc483; --ok-soft:#1d3524; --bad:#f08a80; --bad-soft:#3d2220; --warn:#e6b45a; --warn-soft:#3a2f17; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font:16px/1.45 var(--body);margin:0}
 .wrap{max-width:980px;margin:0 auto;padding-block:20px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:18px}
@@ -100,7 +100,7 @@ h1{font:800 clamp(26px,5vw,34px)/1.1 var(--display);margin:6px 0 0;text-wrap:bal
 .btn.danger{background:var(--bad);border-color:var(--bad);color:#fff}
 .icon{background:transparent;border:0;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;padding:4px 6px;border-radius:6px}
 .icon:hover{color:var(--bad);background:var(--bad-soft)}
-.row-end{display:flex;gap:4px;align-items:center}
+.row-end{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
 .add{padding:8px 14px}
 .add button{font:600 13px var(--body);background:transparent;border:1px dashed var(--line);color:var(--accent);border-radius:8px;padding:6px 12px;cursor:pointer}
 .confirm{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--bad)}
@@ -127,16 +127,21 @@ h1{font:800 clamp(26px,5vw,34px)/1.1 var(--display);margin:6px 0 0;text-wrap:bal
 .sheet-tools input{flex:1;min-width:140px;font:15px var(--body);padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
 .count{font:600 14px var(--body);color:var(--bad)}
 .list{overflow:auto;flex:1;padding:6px 0}
-.aluno{display:grid;grid-template-columns:28px minmax(0,1fr) 58px 58px;align-items:center;gap:6px;padding:6px 18px;border-bottom:1px solid var(--line)}
+.aluno{display:grid;grid-template-columns:26px minmax(0,1fr) 50px 50px 50px;align-items:center;gap:6px;padding:6px 18px;border-bottom:1px solid var(--line)}
 .aluno .ck{display:flex;justify-content:center;align-items:center;height:36px;border-radius:8px;cursor:pointer}
 .aluno .ck:hover{background:var(--bg)}
 .aluno .ck.fa input{accent-color:var(--warn)}
 .aluno .ck.off{opacity:.35;cursor:not-allowed}
-.cols{display:grid;grid-template-columns:28px minmax(0,1fr) 58px 58px;gap:6px;padding:8px 18px;border-bottom:1px solid var(--line);font:700 11px/1.1 var(--body);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);position:sticky;top:0;background:var(--card);z-index:1}
-.cols span:nth-child(3),.cols span:nth-child(4){text-align:center}
-.cols .c-f{color:var(--bad)} .cols .c-fa{color:var(--warn)}
+.cols{display:grid;grid-template-columns:26px minmax(0,1fr) 50px 50px 50px;gap:6px;padding:8px 18px;border-bottom:1px solid var(--line);font:700 11px/1.1 var(--body);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);position:sticky;top:0;background:var(--card);z-index:1}
+.cols span:nth-child(n+3){text-align:center}
+.cols .c-f{color:var(--bad)} .cols .c-fa{color:var(--warn)} .cols .c-ab{color:var(--low)}
 .count.fa{color:var(--warn)}
 .aluno.semfa{background:var(--warn-soft)}
+.aluno.abaixo{background:var(--low-soft)}
+.aluno.abaixo .nome{color:var(--low);font-weight:700}
+.aluno .ck.ab input{accent-color:var(--low)}
+.count.ab{color:var(--low)}
+.ra ol.ab{color:var(--low)}
 .aluno.semfa .nome{color:var(--warn);font-weight:700}
 :root{--btn-white:#ffffff;--btn-black:#111111}
 .btn.rowbtn{background:var(--btn-white);color:var(--btn-black);border:1px solid var(--btn-black)}
@@ -300,6 +305,7 @@ function avRow(a){
     ? `<span class="confirm">Apagar? <button class="btn danger" data-delok="${a.id}">Sim</button><button class="btn ghost" data-delno>Não</button></span>`
     : `<button class="btn rowbtn" data-sheet="${a.id}" ${a.status==="aplicada"?"":"disabled"} title="${a.status==="aplicada"?"Marcar quem faltou":"Confirme a aplicação primeiro"}">Faltas${a.status==="aplicada"?` (${nf})`:""}</button>
        <button class="btn rowbtn" data-fa="${a.id}" title="Marcar quem não fez a F.A.">F.A.${(a.semFA||[]).length?` (${(a.semFA||[]).length})`:""}</button>
+       <button class="btn rowbtn" data-ab="${a.id}" ${a.status==="aplicada"?"":"disabled"} title="${a.status==="aplicada"?"Marcar quem ficou abaixo da média":"Confirme a aplicação primeiro"}">Abaixo da média${a.status==="aplicada"&&(a.abaixo||[]).length?` (${(a.abaixo||[]).length})`:""}</button>
        <button class="icon" data-del="${a.id}" aria-label="Apagar avaliação">×</button>`;
   return `<div class="av">
     <div><input type="text" id="t-${a.id}" data-title="${a.id}" value="${esc(a.titulo||"")}" aria-label="Nome da avaliação"><div class="when ${late?"late":""}">${late?"Já passou · confirme se foi aplicada":r.t}${a.concluida&&a.status==="aplicada"?'<span class="pill">concluída</span>':""}</div></div>
@@ -315,7 +321,7 @@ function avRow(a){
 function renderSheet(){
   const root = $("#sheet-root");
   if(!sheet || !avs[sheet.id]){ root.innerHTML=""; sheet=null; return; }
-  const a = avs[sheet.id], alunos = ROSTERS[a.turma], f = new Set(a.faltas||[]), fa = new Set(a.semFA||[]);
+  const a = avs[sheet.id], alunos = ROSTERS[a.turma], f = new Set(a.faltas||[]), fa = new Set(a.semFA||[]), ab = new Set(a.abaixo||[]);
   const podeF = a.status==="aplicada";
   const q = (sheet.busca||"").trim().toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
   const listEl = root.querySelector(".list"); const scroll = listEl ? listEl.scrollTop : 0;
@@ -329,15 +335,17 @@ function renderSheet(){
           <input id="busca" type="search" placeholder="Buscar aluno" value="${esc(sheet.busca||"")}">
           <span class="count" id="cnt-f">${podeF?`${f.size} ${f.size===1?"faltou":"faltaram"}`:"prova ainda não aplicada"}</span>
           <span class="count fa" id="cnt-fa">${fa.size} sem F.A.</span>
+          <span class="count ab" id="cnt-ab">${podeF?`${ab.size} abaixo da média`:""}</span>
         </div>
       </div>
-      <div class="list"><div class="cols"><span>Nº</span><span>Aluno</span><span class="c-f">Faltou</span><span class="c-fa">Sem F.A.</span></div>${alunos.map((n,i)=>{
+      <div class="list"><div class="cols"><span>Nº</span><span>Aluno</span><span class="c-f">Faltou</span><span class="c-fa">Sem F.A.</span><span class="c-ab">Abaixo média</span></div>${alunos.map((n,i)=>{
         const norm = n.normalize("NFD").replace(/[̀-ͯ]/g,"");
         if(q && !norm.includes(q)) return "";
-        const on = f.has(n), sf = fa.has(n);
-        return `<div class="aluno ${on?"faltou":sf?"semfa":""}"><span class="n">${String(i+1).padStart(2,"0")}</span><span class="nome">${esc(n)}</span>
+        const on = f.has(n), sf = fa.has(n), sb = ab.has(n);
+        return `<div class="aluno ${on?"faltou":sb?"abaixo":sf?"semfa":""}"><span class="n">${String(i+1).padStart(2,"0")}</span><span class="nome">${esc(n)}</span>
           <label class="ck ${podeF?"":"off"}" title="Faltou à prova"><input type="checkbox" id="c-${i}" data-aluno="${esc(n)}" ${on?"checked":""} ${podeF?"":"disabled"} aria-label="${esc(n)} faltou"></label>
-          <label class="ck fa" title="Não fez a F.A."><input type="checkbox" id="fa-${i}" data-fa-aluno="${esc(n)}" ${sf?"checked":""} aria-label="${esc(n)} não fez a F.A."></label></div>`;
+          <label class="ck fa" title="Não fez a F.A."><input type="checkbox" id="fa-${i}" data-fa-aluno="${esc(n)}" ${sf?"checked":""} aria-label="${esc(n)} não fez a F.A."></label>
+          <label class="ck ab ${podeF?"":"off"}" title="Abaixo da média"><input type="checkbox" id="ab-${i}" data-ab-aluno="${esc(n)}" ${sb?"checked":""} ${podeF?"":"disabled"} aria-label="${esc(n)} ficou abaixo da média"></label></div>`;
       }).join("")}</div>
       <div class="sheet-foot">
         <button class="btn ghost" data-copy>Copiar listas</button>
@@ -352,9 +360,10 @@ function renderSheet(){
 
 function atualizarLinha(el){
   const a = avs[sheet.id]; const row = el.closest(".aluno");
-  const f = el.closest(".aluno").querySelector("[data-aluno]"), g = el.closest(".aluno").querySelector("[data-fa-aluno]");
-  row.classList.toggle("faltou", f.checked); row.classList.toggle("semfa", !f.checked && g.checked);
-  const nf=(a.faltas||[]).length, nfa=(a.semFA||[]).length;
+  const f = el.closest(".aluno").querySelector("[data-aluno]"), g = el.closest(".aluno").querySelector("[data-fa-aluno]"), h = el.closest(".aluno").querySelector("[data-ab-aluno]");
+  row.classList.toggle("faltou", f.checked); row.classList.toggle("abaixo", !f.checked && h.checked); row.classList.toggle("semfa", !f.checked && !h.checked && g.checked);
+  const nf=(a.faltas||[]).length, nfa=(a.semFA||[]).length, nab=(a.abaixo||[]).length;
+  if(a.status==="aplicada") $("#cnt-ab").textContent = `${nab} abaixo da média`;
   if(a.status==="aplicada") $("#cnt-f").textContent = `${nf} ${nf===1?"faltou":"faltaram"}`;
   $("#cnt-fa").textContent = `${nfa} sem F.A.`;
 }
@@ -374,6 +383,7 @@ function reportText(){
       }
       const sfa=ROSTERS[t].filter(n=>(a.semFA||[]).includes(n));
       if(sfa.length) linhas.push(`    Não fizeram a F.A. (${sfa.length}): `+sfa.join("; ")); else if(a.concluida) linhas.push("    Todos fizeram a F.A.");
+      if(a.status==="aplicada" && a.concluida){ const ab=ROSTERS[t].filter(n=>(a.abaixo||[]).includes(n)); linhas.push(ab.length?`    Abaixo da média (${ab.length}): `+ab.join("; "):"    Todos alcançaram a média"); }
     });
     linhas.push("");
   });
@@ -408,6 +418,8 @@ function renderReport(){
           else corpo='<span class="wt">Aplicação a confirmar</span>';
           const sfa=ROSTERS[t].filter(n=>(a.semFA||[]).includes(n));
           corpo += sfa.length?`<div class="d">Não fizeram a F.A. (${sfa.length}):</div><ol class="fa">${sfa.map(n=>`<li>${esc(n)}</li>`).join("")}</ol>`:(a.concluida?'<span class="okp">Todos fizeram a F.A.</span>':"");
+          if(a.status==="aplicada" && a.concluida){ const abx=ROSTERS[t].filter(n=>(a.abaixo||[]).includes(n));
+            corpo += abx.length?`<div class="d">Abaixo da média (${abx.length}):</div><ol class="ab">${abx.map(n=>`<li>${esc(n)}</li>`).join("")}</ol>`:'<span class="okp">Todos alcançaram a média</span>'; }
           return `<div class="ra"><b>${esc(a.titulo)}</b><span class="d">${fmtData(a.data)} · ${STATUS[a.status]}</span>${corpo}</div>`;
         }).join(""):'<div class="d">Sem avaliações</div>'}
       </section>`;
@@ -427,12 +439,13 @@ document.addEventListener("click", e=>{
   if(t.dataset.st){ const a=avs[t.dataset.id]; a.status=t.dataset.st; if(a.status!=="aplicada") a.concluida=false; render(); gravar(a.id); return; }
   if(t.dataset.sheet){ sheet={id:t.dataset.sheet,busca:"",novo:true}; renderSheet(); return; }
   if(t.dataset.fa){ sheet={id:t.dataset.fa,busca:"",novo:true}; renderSheet(); return; }
+  if(t.dataset.ab){ sheet={id:t.dataset.ab,busca:"",novo:true}; renderSheet(); return; }
   if(t.dataset.del){ confirmDel=t.dataset.del; render(); return; }
   if(t.dataset.delok){ confirmDel=null; apagar(t.dataset.delok); return; }
   if("delno" in t.dataset){ confirmDel=null; render(); return; }
   if("copy" in t.dataset){
     const a = avs[sheet.id]; const nomes = ROSTERS[a.turma].filter(n=>(a.faltas||[]).includes(n)), sfa = ROSTERS[a.turma].filter(n=>(a.semFA||[]).includes(n));
-    const txt = `${a.titulo} – ${a.turma} – ${fmtData(a.data)}\nFaltaram (${nomes.length}):\n` + (nomes.join("\n")||"ninguém") + `\n\nNão fizeram a F.A. (${sfa.length}):\n` + (sfa.join("\n")||"ninguém");
+    const txt = `${a.titulo} – ${a.turma} – ${fmtData(a.data)}\nFaltaram (${nomes.length}):\n` + (nomes.join("\n")||"ninguém") + `\n\nNão fizeram a F.A. (${sfa.length}):\n` + (sfa.join("\n")||"ninguém") + (a.status==="aplicada" ? `\n\nAbaixo da média (${(a.abaixo||[]).length}):\n` + (ROSTERS[a.turma].filter(n=>(a.abaixo||[]).includes(n)).join("\n")||"ninguém") : "");
     const ok=()=>{$("#toast").textContent="Copiado"};
     try{ navigator.clipboard.writeText(txt).then(ok,()=>{$("#toast").textContent="Não deu para copiar"}); }catch(_){ $("#toast").textContent="Não deu para copiar"; }
     return;
@@ -448,6 +461,12 @@ document.addEventListener("change", e=>{
   const el = e.target;
   if(el.dataset.date){ const a=avs[el.dataset.date]; a.data=el.value; render(); gravar(a.id); }
   if(el.dataset.title){ const a=avs[el.dataset.title]; a.titulo=el.value.trim()||"Avaliação"; gravar(a.id); }
+  if(el.dataset.abAluno!==undefined && sheet){
+    const a = avs[sheet.id]; const s = new Set(a.abaixo||[]);
+    el.checked ? s.add(el.dataset.abAluno) : s.delete(el.dataset.abAluno);
+    a.abaixo = ROSTERS[a.turma].filter(n=>s.has(n));
+    atualizarLinha(el); gravarDepois(a.id); return;
+  }
   if(el.dataset.faAluno!==undefined && sheet){
     const a = avs[sheet.id]; const s = new Set(a.semFA||[]);
     el.checked ? s.add(el.dataset.faAluno) : s.delete(el.dataset.faAluno);
